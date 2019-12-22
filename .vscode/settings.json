@@ -1,0 +1,5 @@
+{
+    "python.pythonPath": "/home/const/.pyenv/versions/ml/bin/python",
+    "python.linting.pylintEnabled": true,
+    "python.linting.enabled": true
+}

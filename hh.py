@@ -9,6 +9,7 @@ from decimal import Decimal
 
 CUR_VALUES = {}
 
+
 def load_curr_rates(vals):
   r = requests.get('http://www.cbr.ru/scripts/XML_daily.asp')
   cr = BeautifulSoup(r.text, 'lxml')
@@ -17,32 +18,32 @@ def load_curr_rates(vals):
       try:
           node = cr.find(text=v).parent.parent
           cur[v] = {'value': Decimal(node.value.text.replace(',', '.'))}
-      except:
-          pass
+      except Exception as err:
+          print(err)
 
   return cur
 
 
 def calc_salary(from_, to_, gross, curr):  
-  if from_ == None:
+  if from_ is None:
     from_ = float('NaN')
-  if to_ == None:
+  if to_ is None:
     to_ = float('NaN')
-  if math.isnan(from_) and math.isnan(to_) or gross == None:
+  if math.isnan(from_) and math.isnan(to_) or gross is None:
     res = float('NaN')
   if math.isnan(from_):
-    if gross == False:
+    if not gross:
       res = to_ / 0.87
     else:
       res = to_
   elif math.isnan(to_):
-    if gross == False:
+    if not gross:
       res = from_ / 0.87
     else:
       res = from_ 
   else:
     res = (from_ + to_) / 2
-    if gross == False:
+    if not gross:
       res /= 0.87
   res *= CUR_VALUES.get(curr, 1)
   
