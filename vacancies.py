@@ -14,10 +14,10 @@ def calc_salary(from_, to_, gross, curr):
         to_ = float('NaN')
     if math.isnan(from_) and math.isnan(to_) or gross is None:
         res = float('NaN')
-    if math.isnan(from_):       
+    if math.isnan(from_):
         res = to_ if gross else to_ / 0.87
     elif math.isnan(to_):
-        res = from_ if gross else from_ / 0.87        
+        res = from_ if gross else from_ / 0.87
     else:
         res = (from_ + to_) / 2
         if not gross:
@@ -34,7 +34,7 @@ def get_vac_urls(search_text, area):
     pages = r.json()['pages']
     for p in range(pages):
         r = requests.get('https://api.hh.ru/vacancies', params={
-                         'page': p, 'per_page': per_page, 'text': search_text, 'area': area}).json()['items']
+                         'text': search_text, 'area': area, 'per_page': per_page, 'page': p}).json()['items']
         for i in range(len(r)):
             vacs.append(r[i]['url'])
     return vacs
@@ -58,6 +58,7 @@ def download_vacancies(search_text, area):
     df = df.join(pd.read_json(df.employer.to_json()).T['id'], rsuffix='_empl')
     df.drop('employer', axis=1, inplace=True)
     df.rename(columns={'id_empl': 'empl_id'}, inplace=True)
+    global CUR_VALUES
     CUR_VALUES = tools.load_curr_rates(df['currency'].unique().tolist())
     df['salary'] = df.apply(lambda x: calc_salary(
         x['from'], x['to'], x['gross'], x['currency']), axis=1)

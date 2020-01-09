@@ -4,7 +4,6 @@ import json
 import math
 import argparse
 from bs4 import BeautifulSoup
-from decimal import Decimal
 
 
 CUR_VALUES = {}
@@ -17,7 +16,7 @@ def load_curr_rates(vals):
   for v in vals:    
       try:
           node = cr.find(text=v).parent.parent
-          cur[v] = {'value': Decimal(node.value.text.replace(',', '.'))}
+          cur[v] = float(node.value.text.replace(',', '.'))
       except Exception as err:
           print(err)
 
@@ -44,7 +43,7 @@ def calc_salary(from_, to_, gross, curr):
   else:
     res = (from_ + to_) / 2
     if not gross:
-      res /= 0.87
+      res /= 0.87  
   res *= CUR_VALUES.get(curr, 1)
   
   return res
@@ -52,11 +51,13 @@ def calc_salary(from_, to_, gross, curr):
 
 def get_vac_urls(args):
   vacs = []
-  r = requests.get('https://api.hh.ru/vacancies', params={'text':args.text, 'area':args.area, 'per_page':100})
+  r = requests.get('https://api.hh.ru/vacancies', 
+                    params={'text':args.text, 'area':args.area, 'per_page':100, 'search_field':'name'})
   per_page = r.json()['per_page']
   pages = r.json()['pages']
   for p in range(pages):    
-    r = requests.get('https://api.hh.ru/vacancies', params={'page': p, 'per_page':per_page, 'text':args.text, 'area':args.area}).json()['items']
+    r = requests.get('https://api.hh.ru/vacancies', 
+                    params={'text':args.text, 'area':args.area, 'per_page':per_page, 'page': p, 'search_field':'name'}).json()['items']
     for i in range(len(r)):       
         vacs.append(r[i]['url'])
 
@@ -144,6 +145,7 @@ def main():
   vac_df.drop('employer', axis=1, inplace=True)
   vac_df.rename(columns={'id_empl':'empl_id'}, inplace=True)
 
+  global CUR_VALUES
   CUR_VALUES = load_curr_rates(vac_df['currency'].unique().tolist())  
   vac_df['salary'] = vac_df.apply(lambda x: calc_salary(x['from'], x['to'], x['gross'], x['currency']), axis=1)
   vac_df['currency'] = vac_df['currency'].apply(lambda x: 'RUR' if x in CUR_VALUES else x)
@@ -155,7 +157,7 @@ def main():
   skill_df.to_csv('csv/skills.csv', header=True, index=False)
   prof_df.to_csv('csv/prof.csv', header=True, index=False)
   vac_df[['id', 'name', 'salary', 'currency', 'empl_id']].to_csv('csv/vac.csv', header=True, index=False)
-
+  
   # join and export all data in 1 file
   empl_df.columns = ['empl_id', 'empl_name']
   ind_df.columns = ['empl_id', 'ind_id', 'ind_name']

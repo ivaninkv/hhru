@@ -1,7 +1,6 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-from decimal import Decimal
 
 CSV_NAME = 'csv'
 PRINT_EVEREY_VACS = 50
@@ -19,7 +18,7 @@ def load_curr_rates(vals):
     for v in vals:
         try:
             node = cr.find(text=v).parent.parent
-            cur[v] = {'value': Decimal(node.value.text.replace(',', '.'))}
+            cur[v] = float(node.value.text.replace(',', '.'))
         except Exception as err:
             print(err)
     return cur
